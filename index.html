@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      #messages { margin-bottom: 40px }
+    </style>
+  </head>
+  <body>
+  		<script src='./Scripts/Utility/Utility.js'></script>
+  		<script src='./Scripts/Utility/WASM.js'></script>          
+  
+		<script src='./Scripts/Libraries/gl-matrix/gl-matrix/common.js'></script>
+		<script src='./Scripts/Libraries/gl-matrix/gl-matrix/vec3.js'></script>
+		<script src='./Scripts/Libraries/gl-matrix/gl-matrix/vec4.js'></script>
+		<script src='./Scripts/Libraries/gl-matrix/gl-matrix/mat3.js'></script>
+		<script src='./Scripts/Libraries/gl-matrix/gl-matrix/mat4.js'></script>
+		<script src='./Scripts/Libraries/gl-matrix/gl-matrix/quat.js'></script>		
+    
+		<script src='./Scripts/Utility/List/RelativeAxis.js'></script>        
+		<script src='./Scripts/Utility/List/RelativeAxisIntermediate.js'></script>        
+    
+		<script src='./Scripts/Utility/Math/Math.js'></script>        
+        
+		<script src='./Scripts/Utility/String/StringParse.js'></script>
+		<script src='./Scripts/System/Timer.js'></script>
+				
+	
+		<script src='./Scripts/Object/Mechanic.js'></script>
+		<script src='./Scripts/Object/Mechanism.js'></script>
+		
+        <script src='./Scripts/Object/Controller/Controller.js'></script>
+        	
+		<script src='./Scripts/Graphics/View.js'></script>
+
+		<script src='./Scripts/Graphics/Geometry/Geometry.js'></script>
+		<script src='./Scripts/Graphics/Geometry/Vertex.js'></script> 
+		<script src='./Scripts/Graphics/Geometry/Tri.js'></script>        
+		<script src='./Scripts/Graphics/Geometry/Quad.js'></script>                
+
+		<script src='./Scripts/Graphics/Model/Model.js'></script>				
+		<script src='./Scripts/Graphics/Model/Rectoid.js'></script>				
+		<script src='./Scripts/Graphics/Model/Leg.js'></script>				
+		<script src='./Scripts/Graphics/Model/Pelvis.js'></script>				
+		
+        <script src='./Scripts/Graphics/Model/GUI/GUI.js'></script>				
+
+		<script src='./Scripts/Graphics/Stroke.js'></script>
+		<script src='./Scripts/Graphics/Radiant.js'></script>		
+		<script src='./Scripts/Libraries/CanvasTextWrapper/CanvasTextWrapper.js'></script>
+		
+		<script src='./Scripts/Input/Keyboard.js'></script>
+		<script src='./Scripts/Input/Mouse.js'></script>
+		
+		<script src='./Scripts/Connection/Connection.js'></script>
+				
+		<script src='./Scripts/System/FileIO/FileInput.js'></script>
+		<script src='./Scripts/System/FileIO/FileOutput.js'></script>
+		<script src='./Scripts/System/FileIO/Database.js'></script>
+		
+		<script src='./Scripts/Object/Catalogue/Biology/Pelvis.js'></script>
+		<script src='./Scripts/Object/Catalogue/Biology/Torso.js'></script>		
+		
+		<script src='./Scripts/Object/Catalogue/Tools/Lantern.js'></script>		
+		
+		<script src='./Scripts/PrimeAssets.js'></script>
+ 		<script src='./Scripts/PrimeObjects.js'></script>  
+  
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+
+	<script data-main="./main" src="./require.js"></script>
+
+    </script>
+  </body>
+</html>

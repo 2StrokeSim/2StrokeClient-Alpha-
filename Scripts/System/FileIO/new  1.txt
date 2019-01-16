@@ -1,0 +1,5 @@
+undefined.object_controllers=function(){return {}};
+
+undefined.object_keyboard=function(){return {NaN:function(){if(<5){Graphics.e_function_AlphaGraphics_CycleUp();++;}},NaN:function(){if(<5){Graphics.e_function_AlphaGraphics_CycleUp();++;}},}};
+input.object_keyboard_controller=function(){return {NaN:function(){if(<5){Graphics.e_function_AlphaGraphics_CycleUp();++;}},NaN:function(){if(<5){Graphics.e_function_AlphaGraphics_CycleUp();++;}},}};
+input.object_keyboard_controller=function(){return {CycleUp:function(){if(<5){Graphics.e_function_AlphaGraphics_CycleUp();++;}},CycleDown:function(){if(<5){Graphics.e_function_AlphaGraphics_CycleUp();++;}},}};
