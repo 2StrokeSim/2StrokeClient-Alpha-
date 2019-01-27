@@ -1,26 +1,7 @@
 "use strict";
 
-require(['graphics', 'WASM', 'timer', 'network'], function(graphics, WASM, timer, network)
+require(['graphics', 'timer', 'network'], function(graphics, timer, network)
 {
-
-/*    var show_differences = function(sources1, sources2, counts, source_names)
-    {       
-        var i;
-        var j;
-        for (j = 0; j < counts.length; j++)
-        {
-            console.log("differences in " + source_names[j] + ": ");
-            for (i = 0; i < counts[j]; i++)
-            {
-                if (sources1[j][i] != sources2[j][i])
-                {
-                    console.log(" Index " + i + ", source 1: " + sources1[j][i] + ", source 2: " + sources2[j][i] + ", difference: " + (sources1[j][i] - sources2[j][i]));
-                }
-            }            
-        }
-    }*/
-//    show_differences([this.normals, this.texcoords, new Float32Array(face), this.indexes], [normalsW, texcoordsW, vertexesW, indexesW], data_counts, ["normals", "texcoords", "vertexes", "indexes"]);
-
     var welcomestring = "undetected browser";
 
     // Opera 8.0+
@@ -85,12 +66,6 @@ require(['graphics', 'WASM', 'timer', 'network'], function(graphics, WASM, timer
 		WASM.receive_delta(4); 
 	};
     
-    /*    function(texcoordNumComponents, width, height, back_color, text)
-    {       
-        setReflective(texcoordNumComponents);	
-
-        build_bind_and_activate_texture(width, height, back_color, text);  
-    };*/
 	
     var transform_vertex_buffer;
     
@@ -157,8 +132,6 @@ require(['graphics', 'WASM', 'timer', 'network'], function(graphics, WASM, timer
             
             var GUI = Mechanism(GUI_MECHANISM, []);//new Component(PELVIS_MECHANISM, []);
 
-//          Mouse.set_hack_via_function_that_needs_deleted(GUI.controller.update);
-//          interface_view.insert(GUI.menu);
                         
             var eye_view = new View( 0, 0, window.innerWidth, window.innerHeight, View.PERSPECTIVE );																			
                     
@@ -237,45 +210,22 @@ require(['graphics', 'WASM', 'timer', 'network'], function(graphics, WASM, timer
     
         WASM_access.initstuff();
     
-        // Sequences of stages of braids feeding windings
-//        WASM_access.trace_sequence_append(trace, trace2);
-            
-//            var gimbal_orbit = new Orbit( origin, orientation, [0, 25, 0], braid, innerMat, winding, worldMat, twines, trace )
 
             WASM_access.trace_sequence_append( gimbal_orbit_trace, rail_orbit_trace );
-
-//            var gimbal_rail_controller = new GimbalRailArmController(gimbal_orbit, rail_orbit);
              
             WASM_access.linkstuff(gimbal_orbit_trace);
             
             
             
             Timer.start();                
-                                
-  //         eye_view.insert(left_leg.hip_glyph);
-                        
-            for (var i = 0; i < 4; i++)
-            {
-
-
-//                    var shoulder = Mechanism(PELVIS_MECHANISM, [[-240 + i*120, 0, 0]]);//new Component(PELVIS_MECHANISM, []);          
-                    
-//                    var action = shoulder.action;
-
-//                    Timer.schedule = RelativeAxis.project_partition_forward(new Partition( 0, action.action.bind(action.mechanic), [Timer.sequence], undefined ), Timer.schedule);                 
-                    
-                    // TODO: This is essentially where our physics is hooked up to the timing. This is ugly. Really damn ugly.
-//                    WASM_access.linkstuff(shoulder.trace, shoulder.synapse, shoulder.controller);
-                
-            }
-            
+                                            
         	graphics.insert(eye_view);            
             
             WASM.start();
         }
 
-        Database.create_database_from_object("AlphaMenu", menu_library, function(){setTimeout(compile, 0);});
-        
+        compile();
+       
 	};
     
     var request_record = function(record_index)
@@ -363,6 +313,50 @@ require(['graphics', 'WASM', 'timer', 'network'], function(graphics, WASM, timer
                         ];
                             
     graphics.interfacing( imports, exports );
+
+        function FileHelper()
+        {
+            FileHelper.prototype.readStringFromFileAtPath = function(pathOfFileToReadFrom, callback)
+            {
+                var request = new XMLHttpRequest();
+                request.onload = this.readStringFromFileAtPath_OnLoad.bind(this, callback);
+                request.open("GET", pathOfFileToReadFrom, true);
+                request.send();
+            }
+
+            FileHelper.prototype.readStringFromFileAtPath_OnLoad = function(callback, event)
+            {
+                var request = event.target;
+                var returnValue = request.responseText;
+                console.log("Return value: " + returnValue);
+                geometries[RECTOID_GEOMETRY_BLOB].obj = returnValue;
+                callback(returnValue);
+            }
+        }
+        
+        var file_helper = new FileHelper();
+        
+        
+    var asset_index = 0;
+    var asset_refs = [ 
+                        { path: "./Data/Rectoid.obj" }
+                     ];
+                     
+                     
+                     
+    var load_assets = function()
+    {
+        if (asset_index < asset_refs.length)
+        {   
+            var asset_ref = asset_refs[asset_index];
+            asset_index++;
+            file_helper.readStringFromFileAtPath(asset_ref.path, load_assets);      
+        }
+        else
+        {
+            setTimeout(start, 0);
+        }
+    }
     
 	WASM.instantiate(	'./client.wasm',
                                     
@@ -370,7 +364,7 @@ require(['graphics', 'WASM', 'timer', 'network'], function(graphics, WASM, timer
 									
 									exports,
 									
-									start
+									function(){Database.create_database_from_object("AlphaMenu", menu_library, load_assets);}
 								);	
 	
 });

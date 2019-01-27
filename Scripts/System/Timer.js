@@ -43,8 +43,6 @@ var Timer = new (function()
         elapsed = (Math.round(elapsed) * MS_TO_TIME_UNIT_SCALE);	
           
         WASM_access.execute_frame2(elapsed);
-          
-        sequence = RelativeAxis.execute_span(sequence, elapsed);
    
         WASM_access.execute_frame3(elapsed);
    

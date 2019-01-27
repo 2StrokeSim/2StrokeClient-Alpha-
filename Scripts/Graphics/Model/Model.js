@@ -243,18 +243,14 @@ Model = new (function()
         
     }
     
-    this.instantiate_defined = function(index)
-    { 
-        var model = Model.definitions[index];
-
-        return { geometry: model.geometry, normals: model.normals.slice(), indexes: model.indexes.slice(), texcoords: model.texcoords.slice(), accents: model.accents.slice(), connection: model.connection, serif: model.serif, registry: model.registry, order: model.order }
-    };
 
     var model_data = [];
 
     
     var enter_model_atlas_record = function(vertices, normals, texcoords, vertex_count, entry_index)
     {
+        console.log("vertex count: " + vertex_count + " entry index: " + entry_index);
+        console.log("vertices length: " + vertices.length + " vertices: " + vertices);
         var vertex_stride = 3;
         var row_size = 2048;
 
@@ -320,6 +316,14 @@ Model = new (function()
     var prototype_atlas_index;
     
     
+    const SAMPLER_VERTEXES_PER_MODEL_ATLAS_ROW = 512;
+    const SAMPLER_VERTEXES_PER_MODEL_ATLAS_COLUMN = 4;    
+    const SAMPLER_ROWS_PER_MODEL_ATLAS_ENTRY = 4;
+    const SAMPLER_COLUMNS_PER_MODEL_ATLAS_ENTRY = 1;
+    const COORDINATES_PER_MODEL_ATLAS_SAMPLER_VERTEX = 4;
+    
+    const ONE_D_DATA_LENGTH_OF_ATLAS_SAMPLER = (SAMPLER_VERTEXES_PER_MODEL_ATLAS_ROW * SAMPLER_VERTEXES_PER_MODEL_ATLAS_COLUMN * 4);
+    
     this.register_models = function(transformAtlasLoc)
     {   
  /*       for (var property in geometries) {
@@ -333,25 +337,29 @@ Model = new (function()
         var model_data = [];
         
         
-        u_transformAtlasLoc = transformAtlasLoc;
+      //  u_transformAtlasLoc = transformAtlasLoc;
         
         var model_offset = 0;  
     
-        build_models();
+       // build_models();
     
         Model.definitions[Model.RECTOID_DEFINITION] = new Model.definitions[Model.RECTOID_DEFINITION]();
         Model.definitions[Model.LOWER_LEG_DEFINITION] = new Model.definitions[Model.LOWER_LEG_DEFINITION]();
         Model.definitions[Model.UPPER_LEG_DEFINITION] = new Model.definitions[Model.UPPER_LEG_DEFINITION]();
-        Model.definitions[Model.PELVIS] = new Model.definitions[Model.PELVIS]();
+        Model.definitions[Model.PELVIS_DEFINITION] = new Model.definitions[Model.PELVIS_DEFINITION]();
         Model.definitions[Model.GUI_DEFINITION] = new Model.definitions[Model.GUI_DEFINITION]();
             
                 
-        for (var i = 0; i < 8192; i++)
+        for (var i = 0; i < ONE_D_DATA_LENGTH_OF_ATLAS_SAMPLER; i++)
         {
             model_data[i] = 0;
         }      
 
+        
+        
         model_atlas = create_discrete_FLOATRGBA_sampler2D(model_data, MODEL_ATLAS_TEXTURE_INDEX, 512, 4);
+        
+        
         
         for (var model_index = 0; model_index < geometries.length; model_index++)
         {          
@@ -360,26 +368,12 @@ Model = new (function()
             var entry_index = model_offset / 4;        
            
             var vertex_stride = 3;
-            
-            var normal_index = 0;
-            var texcoord_index = 0;            
-                       
-                                   
+                                                          
             var model_limit = model_offset + (model.vertices.length / vertex_stride) * 4;           
-            
-            var row_size = 2048;
-            
-            var vertex_index = 0;
-            
-            var entry_count = 0;
-
-    
-            model_data = [];
 
             model_limit = (model.vertices.length / vertex_stride) * 4;  
-
-            row_size = model_limit;
-                   
+ 
+            // Build the geometry stat record for WASM and send it in
             var vertex_indexes = [];              
                         
             for (var i = 0; i < model.vertices.length/3; i++)
@@ -387,22 +381,22 @@ Model = new (function()
                 vertex_indexes[i] = i + entry_index;
             }
                    
-            WASM_access.TypedArrays_to_comm(0, new Uint16Array(vertex_indexes), new Uint16Array(model.indexes));            
-
-//          WASM_access.TypedArray_to_comm(new Uint16Array(model.indexes));            
-
+            WASM_access.TypedArrays_to_comm(0, new Uint16Array(vertex_indexes), new Uint16Array(model.indexes));
             
-            WASM_access.geometry_create(model_index, model.vertices.length/3, model.indexes.length);                             
-                 
+            
+            console.log("model.vertices.length/3: " + (model.vertices.length/3));
+            WASM_access.geometry_create(model_index, model.vertices.length/3, model.indexes.length);   
+
+            // Enter the geometry into the model atlas sampler
             enter_model_atlas_record(model.vertices, model.normals, model.texcoords, model.vertices.length, entry_index);
                         
             model_offset += model_limit;
             
-            model.registry = entry_index;
-            
-            model.order = model_index;            
+            model.registry = entry_index;         
         }      
         
+        
+        // Armature
         for (var model_index = 0; model_index < Model.definitions.length; model_index++)
         {
                                   
@@ -414,20 +408,12 @@ Model = new (function()
             
             for (var i = 0; i < model.accents.length; i++)
             {	
-                stroke_lengths[i] = model.accents[i].indexes.length;
+                stroke_lengths[i] = model.geometry.length/3;//model.accents[i].indexes.length;
             }
-
-      //      WASM_access.TypedArray_to_comm(new Uint16Array(stroke_lengths), comm_offset);
-            
-       //     comm_offset += 2 * stroke_lengths.length;
-            
-   //         console.log("Stroke lengths: ");
-   //             console.log(stroke_lengths);   
         
             WASM_access.TypedArrays_to_comm(0, new Uint16Array(model.geometries), new Uint16Array(stroke_lengths));
             comm_offset += 2 * model.geometries.length;
             comm_offset += 2 * stroke_lengths.length;
-
             
             for (var i = 0; i < model.accents.length; i++)
             {	
@@ -435,120 +421,28 @@ Model = new (function()
 //                console.log(model.accents[i].indexes);   
                 WASM_access.TypedArray_to_comm(new Uint16Array(model.accents[i].indexes), comm_offset);
                 comm_offset += 2 * model.accents[i].indexes.length;
-            }        
-            
-            console.log("Before serif:" + comm_offset);
-
-            var text_length;
-            if (model.serif.text == undefined) { text_length = 0; } else { text_length = model.serif.text.length; }             
+            }                   
             
             comm_offset = WASM_access.TypedArrays_to_comm(comm_offset, new Uint32Array(model.serif.back_color), 
-                                                           new Uint32Array([model.serif.width, model.serif.height, text_length]),
+                                                           new Uint32Array([model.serif.width, model.serif.height, 0]),
                                                           );
-
-            WASM_access.UTF8String_to_comm(model.serif.text, comm_offset);                                            
-               
-                           console.log("Before text:" + comm_offset);
-
-               
-            comm_offset += text_length;    
             
-
-                
-//            serif_create(WASM_object, model.serif.width, model.serif.height, model.serif.back_color[0], model.serif.back_color[1], model.serif.back_color[2], model.serif.back_color[3], text_length);  
-
-            for (var i = 0; i < model.subplaten_count; i++)
-            {	
-//                console.log("Stroke indexes: ");
-//                console.log(model.accents[i].indexes);   
-
-                
-                WASM_access.TypedArray_to_comm(new Uint32Array([model.subplatens[i][0]]), comm_offset);
-                comm_offset += 4;
-                WASM_access.TypedArray_to_comm(new Float32Array(model.subplatens[i][1]), comm_offset);
-                comm_offset += 4 * 3;
-                WASM_access.TypedArray_to_comm(new Float32Array(model.subplatens[i][2][0]), comm_offset);
-                comm_offset += 4 * 3;
-
-                console.log(WASM_access.Uint32Array_from_comm(comm_offset-28,1));
-               console.log(WASM_access.Float32Array_from_comm(comm_offset-24,6));                
-                
-            } 
 
             var entry_index = model_offset / 4;                    
        
        
-            WASM_access.type_create(model_index, geometries[model.geometries[0]].registry, model.geometries.length, 
-                                    model.geometries.length, model.accents.length, 1, model.subplaten_count, model.registry);   
+            WASM_access.type_create(model_index, model.indexes.length, 
+                                    model.geometry.length/3, model.accents.length, 1, 0, model.registry);   
       
            
-            var vertex_stride = 3;
-            
-            var normal_index = 0;
-            var texcoord_index = 0;            
+            var vertex_stride = 3;       
                        
                                    
-            var model_limit = model_offset + (model.geometry.length / vertex_stride) * 4;           
-            
-            var row_size = 2048;
-            
-            var vertex_index = 0;
-            
-            var entry_count = 0;
-
-            for (var i = 0; i < model.indexes.length; i++)
-            {
-            //    model.indexes[i] += entry_index;
-            }
-            
-            model_data = [];
-
-            model_limit = (model.geometry.length / vertex_stride) * 4;  
-
-            row_size = model_limit;
-            
-//          enter_model_atlas_record(model.geometry, model.normals, model.texcoords, model.geometry.length, entry_index)
+            var model_limit = (model.geometry.length / vertex_stride) * 4;  
                         
             model_offset += model_limit;
-            
-            model.registry = geometries[model.geometries[0]].registry;
-            
-            model.order = model_index;
-            
-          //  if (model_index == 3)  WASM_access.object_report(0, 4);
         }      
         
-        for (var model_index = 0; model_index < Model.definitions.length; model_index++)
-        {
-            if (Patterns[model_index] == undefined) continue;
-            
-            var comm_offset = 0;
-
-            WASM_access.TypedArray_to_comm(new Uint16Array(Patterns[model_index].inputs), comm_offset);                           
-            comm_offset += 2 * Patterns[model_index].input_count;            
-            
-            for (var i = 0; i < Patterns[model_index].path_count; i++)
-            {	        
-                WASM_access.TypedArray_to_comm(new Uint16Array([Patterns[model_index].paths[i].start, Patterns[model_index].paths[i].end]), comm_offset);
-                comm_offset += 2 * 2;            
-            }   
-            
-            for (var i = 0; i < Patterns[model_index].orbit_count; i++)
-            {	      
-                WASM_access.TypedArray_to_comm(new Float32Array(Patterns[model_index].orbits[i][0]), comm_offset);
-                comm_offset += 4 * 3;
-                
-                WASM_access.TypedArray_to_comm(new Float32Array(Patterns[model_index].orbits[i][1]), comm_offset);
-                comm_offset += 4 * 4;
-
-                WASM_access.TypedArray_to_comm(new Float32Array(Patterns[model_index].orbits[i][2]), comm_offset);
-                comm_offset += 4 * 3;                
-            }   
-            
-       //     console.log(orbits);
-            WASM_access.schematic_create(model_index, Patterns[model_index].input_count, Patterns[model_index].path_count, Patterns[model_index].orbit_count)
-            
-        }
 //      WASM_access.object_report(0, 4);
 
         
@@ -649,7 +543,7 @@ var create_icosahedron = function(index_destination, vertex_destination, normal_
     Model.RECTOID_DEFINITION = 1;
     Model.LOWER_LEG_DEFINITION = 2;
     Model.UPPER_LEG_DEFINITION = 3;
-    Model.PELVIS = 4;
+    Model.PELVIS_DEFINITION = 4;
     Model.PROTOTYPE = 100;
 
 
@@ -865,7 +759,7 @@ const COMPONENT_TYPE_PATTERN = 2;
    
 Patterns = [];
 
-Patterns[Model.PELVIS] = 
+Patterns[Model.PELVIS_DEFINITION] = 
 {
   input_count: 1,
   path_count: 2,
@@ -886,7 +780,7 @@ Patterns[Model.PELVIS] =
                   { 
                     type: COMPONENT_TYPE_GLYPH,          
 
-                    template_index: Model.PELVIS,                    
+                    template_index: Model.PELVIS_DEFINITION,                    
                   
                     primitive_initiations: [0, 0, 0],
 
@@ -934,7 +828,7 @@ Patterns[Model.PELVIS] =
                   { 
                     type: COMPONENT_TYPE_SCHEMATIC, 
 
-                    template_index: Model.PELVIS,                                        
+                    template_index: Model.PELVIS_DEFINITION,                                        
                   
                     primitive_initiations: [40, 3, 0], 
                   
