@@ -559,3 +559,8 @@ const WASM = (function()
 	
 	return exports;
 })();
+
+	define([], function () 
+	{
+		return WASM( {} ); 
+	});
